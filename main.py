@@ -1,59 +1,47 @@
 from faker import Faker
 from sqlalchemy.orm import sessionmaker
 
-from extents import db, base, JS020, JC020, JSC020, MyFaker
-from src.getInfo import courseInfo
+from extents import MyFaker
+from models import db, base, JS020, JC020, JSC020
 
 
-
-def insertFake():
-    students_no = []
-    counter=0
-    # fake student
+def insertFake(my_fake, json_path):
+    students_no = []  # 保存学号，添加选课表时会用
+    # fake student 1000 名
     for i in range(1000):
-        my_fake = MyFaker()
         s_info = my_fake.student()
         students_no.append(s_info["sno"])
-        print(s_info)
+
+        # 插入虚假学生信息
         student = JS020(**s_info)
         session.add(student)
         session.commit()
 
-        print(counter)
-        counter+=1
-
     # fake course
-    courses_info, courses_no = courseInfo()
+    courses_info, courses_no = my_fake.course(json_path)
     for c_info in courses_info:
-        # print(c_info)
+        # 插入虚假课程信息
         course = JC020(**c_info)
         session.add(course)
         session.commit()
 
-        print(counter)
-        counter+=1
-
     # fake grade
-    # counter=0
     for sno in students_no:
-        tmp = {}
+        fake_sc = {}
         cnos = fake.random_choices(elements=courses_no, length=fake.random_int(1, 10))
         for cno in cnos:
-            tmp["sno"] = sno;
-            tmp["cno"] = cno;
+            fake_sc["sno"] = sno
+            fake_sc["cno"] = cno
             grade = fake.random_int(0, 100)
             if grade != 100 and fake.boolean():
                 grade += 0.5
-            tmp["grade"] = "{:.1f}".format(grade)
+            fake_sc["grade"] = "{:.1f}".format(grade)
 
-            sc = JSC020(**tmp)
+            sc = JSC020(**fake_sc)
             session.add(sc)
             session.commit()
 
-            print(tmp)
-            print(counter)
-            counter+=1
-
+            print(fake_sc)
 
 
 Faker(114)
@@ -62,12 +50,11 @@ fake = Faker('zh_CN')
 Session = sessionmaker(db)
 session = Session()
 
-
-
 base.metadata.create_all(db)
 
-insertFake()
-
+my_fake = MyFaker()
+json_path = 'src/course.json'
+insertFake(my_fake, json_path)
 
 # # Create
 # test={"sno":"1234567","sname":"peter"}
@@ -87,8 +74,3 @@ insertFake()
 # # Delete
 # session.delete(doctor_strange)
 # session.commit()
-
-
-
-
-

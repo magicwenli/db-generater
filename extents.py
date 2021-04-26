@@ -1,64 +1,48 @@
-import os
+import json
+import re
+
 from faker import Faker
-from sqlalchemy import create_engine, Column, String, Date, Numeric,ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from dotenv import load_dotenv
-
-load_dotenv(verbose=True)
-
-db_link = os.getenv("DB_LINK")
-db = create_engine(db_link)
-base = declarative_base()
 
 Faker.seed(114)
 fake = Faker('zh_CN')
 
 
-
-class JS020(base):
-    __tablename__ = 'js020'
-
-    sno = Column(String(10), primary_key=True, nullable=False, index=True)
-    sname = Column(String(8), nullable=False)
-    sex = Column(String(3), nullable=False, default='男')
-    bdate = Column(Date, nullable=False, default='1970-01-01')
-    height = Column(Numeric(3, 2), nullable=False, default=0)
-    dorm = Column(String(15))
-
-
-class JC020(base):
-    __tablename__ = 'jc020'
-
-    cno = Column(String(12), primary_key=True, nullable=False, index=True)
-    cname = Column(String(30), nullable=False)
-    period = Column(Numeric(4, 1), nullable=False, default=0)
-    credit = Column(Numeric(2, 1), nullable=False, default=0)
-    teacher = Column(String(10), nullable=False)
-
-
-class JSC020(base):
-    __tablename__ = 'jsc020'
-
-    sno = Column(String(10), ForeignKey('js020.sno'), primary_key=True, nullable=False)
-    cno = Column(String(12), ForeignKey('jc020.cno'), primary_key=True, nullable=False)
-    grade = Column(Numeric(4, 1), nullable=False, default=None)
-
-
 class MyFaker():
-
     def student(self):
-        s = {}
-        s["sno"] = fake.unique.bothify(text='0#0#####')
+        fake_stu = {}
+        fake_stu["sno"] = fake.unique.bothify(text='0#0#####')  # sno
         if fake.boolean():
-            s["sex"] = '男'
-            s["sname"] = fake.name_male()
+            fake_stu["sex"] = '男'  # sex
+            fake_stu["sname"] = fake.name_male()  # sname
         else:
-            s["sex"] = '女'
-            s["sname"] = fake.name_female()
+            fake_stu["sex"] = '女'  # sex
+            fake_stu["sname"] = fake.name_female()  # sname
+        fake_stu["bdate"] = fake.date_between("-23y", "-19y").strftime("%Y-%m-%d")  # bdate 年龄在19-23之间
+        fake_stu["height"] = "{:.2f}".format(fake.random_int(min=150, max=210) / 100)
+        fake_stu["dorm"] = fake.bothify(letters='东西南北', text="?") + "{}舍{}{:0>2d}".format(
+            fake.random_int(min=1, max=20),
+            fake.random_int(min=1, max=7),
+            fake.random_int(min=1, max=30))  # dorm
+        return fake_stu
 
-        s["bdate"] = fake.date_between("-23y", "-19y").strftime("%Y-%m-%d")  # 19-23
-        s["height"] = "{:.2f}".format(fake.random_int(min=150, max=210) / 100)
-        s["dorm"] = fake.bothify(letters='东西南北', text="?") + "{}舍{}{:0>2d}".format(fake.random_int(min=1, max=20),
-                                                                                   fake.random_int(min=1, max=7),
-                                                                                   fake.random_int(min=1, max=30))
-        return s
+    def course(self, filepath):
+        with open(filepath, 'r') as f:
+            json_text = json.load(f)
+            fake_cuss = []
+            cus_nos = []
+            cus_names = []
+            for a in json_text["datas"]["qxfbkccx"]["rows"]:
+                fake_cus = {}
+                # 部分课程名带有英文后缀，此处将其删去
+                cus_name = re.sub("\b?[A-Za-z].*$", "", a['KCM'])
+                # 每个课程只取一个，且排除课程名为空的记录
+                if a['KCH'] not in cus_nos and cus_name not in cus_names and cus_name != "":
+                    fake_cus["cno"] = a['KCH']  # cno
+                    fake_cus["cname"] = cus_name  # cname
+                    fake_cus["period"] = a['XS']  # period
+                    fake_cus["credit"] = a['XF']  # credit
+                    fake_cus["teacher"] = re.sub("[, ].*$", "", a['SKJS'])  # 有多个老师的课程，只取第一个老师
+                    fake_cuss.append(fake_cus)
+                    cus_nos.append(a['KCH'])
+                    cus_names.append(cus_name)
+        return fake_cuss, cus_nos

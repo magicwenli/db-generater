@@ -37,4 +37,4 @@ class JSC020(base):
 
     sno = Column(String(10), ForeignKey('js020.sno'), primary_key=True, nullable=False)
     cno = Column(String(12), ForeignKey('jc020.cno'), primary_key=True, nullable=False)
-    grade = Column(Numeric(4, 1), nullable=False, default=None)
+    grade = Column(Numeric(4, 1), nullable=True)

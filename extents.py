@@ -18,7 +18,7 @@ class MyFaker():
             fake_stu["sex"] = '女'  # sex
             fake_stu["sname"] = self.fake.name_female()  # sname
         fake_stu["bdate"] = self.fake.date_between("-23y", "-19y").strftime("%Y-%m-%d")  # bdate 年龄在19-23之间
-        fake_stu["height"] = "{:.2f}".format(self.fake.random_int(min=150, max=210) / 100)
+        fake_stu["height"] = "{:.2f}".format(self.fake.random_int(min=150, max=210) / 100)  # height 1.50-2.10m
         fake_stu["dorm"] = self.fake.bothify(letters='东西南北', text="?") + "{}舍{}{:0>2d}".format(
             self.fake.random_int(min=1, max=20),
             self.fake.random_int(min=1, max=7),
@@ -31,19 +31,19 @@ class MyFaker():
             fake_cuss = []
             cus_nos = []
             cus_names = []
-            for a in json_text["datas"]["qxfbkccx"]["rows"]:
+            for row in json_text["datas"]["qxfbkccx"]["rows"]:
                 fake_cus = {}
                 # 部分课程名带有英文后缀，此处将其删去
-                cus_name = re.sub("\b?[A-Za-z].*$", "", a['KCM'])
+                cus_name = re.sub("\b?[A-Za-z].*$", "", row['KCM'])
                 # 每个课程只取一个，且排除课程名为空的记录
-                if a['KCH'] not in cus_nos and cus_name not in cus_names and cus_name != "":
-                    fake_cus["cno"] = a['KCH']  # cno
+                if row['KCH'] not in cus_nos and cus_name not in cus_names and cus_name != "":
+                    fake_cus["cno"] = row['KCH']  # cno
                     fake_cus["cname"] = cus_name  # cname
-                    fake_cus["period"] = a['XS']  # period
-                    fake_cus["credit"] = a['XF']  # credit
-                    fake_cus["teacher"] = re.sub("[, ].*$", "", a['SKJS'])  # 有多个老师的课程，只取第一个老师
+                    fake_cus["period"] = row['XS']  # period
+                    fake_cus["credit"] = row['XF']  # credit
+                    fake_cus["teacher"] = re.sub("[, ].*$", "", row['SKJS'])  # 有多个老师的课程，只取第一个老师
                     fake_cuss.append(fake_cus)
-                    cus_nos.append(a['KCH'])
+                    cus_nos.append(row['KCH'])
                     cus_names.append(cus_name)
         return fake_cuss, cus_nos
 

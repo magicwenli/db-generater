@@ -1,0 +1,76 @@
+ # (4) 查询每位学生的学号、学生姓名及其已选修课程的学分总数。
+ # ----- old ------
+ Sort  (cost=405.92..408.42 rows=1000 width=54)
+   Sort Key: js.sno DESC
+   ->  HashAggregate  (cost=346.09..356.09 rows=1000 width=54)
+         Group By Key: js.sno, js.sname
+         ->  Hash Join  (cost=40.65..302.35 rows=5832 width=22)
+               Hash Cond: ((jsc.cno)::text = (jc.cno)::text)
+               ->  Hash Join  (cost=32.50..214.01 rows=5832 width=28)
+                     Hash Cond: ((jsc.sno)::text = (js.sno)::text)
+                     ->  Seq Scan on jsc020 jsc  (cost=0.00..101.32 rows=5832 width=20)
+                     ->  Hash  (cost=20.00..20.00 rows=1000 width=17)
+                           ->  Seq Scan on js020 js  (cost=0.00..20.00 rows=1000 width=17)
+               ->  Hash  (cost=5.29..5.29 rows=229 width=16)
+                     ->  Seq Scan on jc020 jc  (cost=0.00..5.29 rows=229 width=16)
+(13 rows)
+
+ # (5) 查询选修课程'CS-02'的学生中成绩第二高的学生学号。AUTO200127
+ # ----- old ------
+ Nested Loop  (cost=246.47..362.69 rows=1 width=9)
+   Join Filter: (public.jsc020.grade = (max(public.jsc020.grade)))
+   ->  Aggregate  (cost=246.47..246.48 rows=1 width=37)
+         InitPlan 1 (returns $0)
+           ->  Aggregate  (cost=115.96..115.97 rows=1 width=37)
+                 ->  Seq Scan on jsc020  (cost=0.00..115.90 rows=24 width=5)
+                       Filter: ((cno)::text = 'AUTO200127'::text)
+         ->  Seq Scan on jsc020  (cost=0.00..130.48 rows=8 width=5)
+               Filter: ((grade < $0) AND ((cno)::text = 'AUTO200127'::text))
+   ->  Seq Scan on jsc020  (cost=0.00..115.90 rows=24 width=14)
+         Filter: ((cno)::text = 'AUTO200127'::text)
+(11 rows)
+
+ # (6) 查询平均成绩超过'王涛'同学的学生学号、姓名和平均成绩，并按学号进行降序排列。
+ # ----- old ------
+ Sort  (cost=436.72..439.02 rows=919 width=49)
+   Sort Key: public.js020.sno DESC
+   ->  Hash Join  (cost=353.58..391.49 rows=919 width=49)
+         Hash Cond: ((public.jsc020.sno)::text = (public.js020.sno)::text)
+         ->  HashAggregate  (cost=321.08..337.16 rows=919 width=78)
+               Group By Key: public.jsc020.sno
+               Filter: (avg(public.jsc020.grade) > $0)
+               InitPlan 1 (returns $0)
+                 ->  Hash Join  (cost=152.99..176.02 rows=460 width=32)
+                       Hash Cond: ((public.jsc020.sno)::text = (public.js020.sno)::text)
+                       ->  HashAggregate  (cost=130.48..141.97 rows=919 width=46)
+                             Group By Key: public.jsc020.sno
+                             ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=14)
+                       ->  Hash  (cost=22.50..22.50 rows=1 width=9)
+                             ->  Seq Scan on js020  (cost=0.00..22.50 rows=1 width=9)
+                                   Filter: ((sname)::text = '李凯'::text)
+               ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=14)
+         ->  Hash  (cost=20.00..20.00 rows=1000 width=17)
+               ->  Seq Scan on js020  (cost=0.00..20.00 rows=1000 width=17)
+(19 rows)
+
+ # (7) 查询选修了3门以上课程（包括3门）的学生中平均成绩最高的同学学号及姓名。
+ # ----- old ------
+ Hash Join  (cost=393.51..418.01 rows=500 width=17)
+   Hash Cond: ((js020.sno)::text = (__unnamed_subquery__.sno)::text)
+   InitPlan 1 (returns $0)
+     ->  Aggregate  (cost=184.91..184.92 rows=1 width=64)
+           ->  HashAggregate  (cost=159.64..173.43 rows=919 width=73)
+                 Group By Key: public.jsc020.sno
+                 Filter: (count(public.jsc020.cno) > 2)
+                 ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=25)
+   ->  Seq Scan on js020  (cost=0.00..20.00 rows=1000 width=17)
+   ->  Hash  (cost=206.09..206.09 rows=200 width=9)
+         ->  HashAggregate  (cost=204.09..206.09 rows=200 width=9)
+               Group By Key: (__unnamed_subquery__.sno)::text
+               ->  Subquery Scan on __unnamed_subquery__  (cost=174.22..201.79 rows=919 width=9)
+                     ->  HashAggregate  (cost=174.22..192.60 rows=919 width=105)
+                           Group By Key: public.jsc020.sno
+                           Filter: ((count(public.jsc020.cno) > 2) AND (avg(public.jsc020.grade) = $0))
+                           ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=25)
+(17 rows)
+ 

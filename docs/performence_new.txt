@@ -1,0 +1,76 @@
+ # (4) 查询每位学生的学号、学生姓名及其已选修课程的学分总数。
+ # ----- new ------
+ Sort  (cost=405.92..408.42 rows=1000 width=54)
+   Sort Key: js020.sno DESC
+   ->  HashAggregate  (cost=346.09..356.09 rows=1000 width=54)
+         Group By Key: js020.sno, js020.sname
+         ->  Hash Join  (cost=40.65..302.35 rows=5832 width=22)
+               Hash Cond: ((jsc020.cno)::text = (jc020.cno)::text)
+               ->  Hash Join  (cost=32.50..214.01 rows=5832 width=28)
+                     Hash Cond: ((jsc020.sno)::text = (js020.sno)::text)
+                     ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=20)
+                     ->  Hash  (cost=20.00..20.00 rows=1000 width=17)
+                           ->  Seq Scan on js020  (cost=0.00..20.00 rows=1000 width=17)
+               ->  Hash  (cost=5.29..5.29 rows=229 width=16)
+                     ->  Seq Scan on jc020  (cost=0.00..5.29 rows=229 width=16)
+(13 rows)
+
+ # (5) 查询选修课程'CS-02'的学生中成绩第二高的学生学号。AUTO200127
+ # ----- new ------
+ Nested Loop  (cost=116.00..232.22 rows=1 width=9)
+   Join Filter: (public.jsc020.grade = (min(public.jsc020.grade)))
+   ->  Aggregate  (cost=116.00..116.01 rows=1 width=37)
+         ->  Limit  (cost=115.98..115.99 rows=1 width=5)
+               ->  Sort  (cost=115.98..115.99 rows=1 width=5)
+                     Sort Key: public.jsc020.grade DESC
+                     ->  HashAggregate  (cost=115.96..115.97 rows=1 width=5)
+                           Group By Key: public.jsc020.grade
+                           ->  Seq Scan on jsc020  (cost=0.00..115.90 rows=24 width=5)
+                                 Filter: ((grade IS NOT NULL) AND ((cno)::text = 'AUTO200127'::text))
+   ->  Seq Scan on jsc020  (cost=0.00..115.90 rows=24 width=14)
+         Filter: ((cno)::text = 'AUTO200127'::text)
+(12 rows)
+
+ # (6) 查询平均成绩超过'王涛'同学的学生学号、姓名和平均成绩，并按学号进行降序排列。
+ # ----- new ------
+ Sort  (cost=393.92..396.42 rows=1000 width=49)
+   Sort Key: public.js020.sno DESC
+   InitPlan 1 (returns $1)
+     ->  Subquery Scan on __unnamed_subquery__  (cost=4.30..44.26 rows=1 width=32)
+           ->  GroupAggregate  (cost=4.30..44.25 rows=1 width=45)
+                 Group By Key: public.js020.sname
+                 ->  Nested Loop  (cost=4.30..44.21 rows=6 width=13)
+                       ->  Seq Scan on js020  (cost=0.00..22.50 rows=1 width=17)
+                             Filter: ((sname)::text = '李凯'::text)
+                       ->  Bitmap Heap Scan on jsc020  (cost=4.30..21.65 rows=6 width=14)
+                             Recheck Cond: ((sno)::text = (public.js020.sno)::text)
+                             ->  Bitmap Index Scan on jsc020_pkey  (cost=0.00..4.30 rows=6 width=0)
+                                   Index Cond: ((sno)::text = (public.js020.sno)::text)
+   ->  HashAggregate  (cost=272.33..289.83 rows=1000 width=86)
+         Group By Key: public.js020.sno, public.js020.sname
+         Filter: (avg(public.jsc020.grade) > $1)
+         ->  Hash Join  (cost=32.50..214.01 rows=5832 width=22)
+               Hash Cond: ((public.jsc020.sno)::text = (public.js020.sno)::text)
+               ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=14)
+               ->  Hash  (cost=20.00..20.00 rows=1000 width=17)
+                     ->  Seq Scan on js020  (cost=0.00..20.00 rows=1000 width=17)
+(21 rows)
+
+ # (7) 查询选修了3门以上课程（包括3门）的学生中平均成绩最高的同学学号及姓名。
+ # ----- new ------
+ Hash Left Join  (cost=362.48..402.69 rows=919 width=17)
+   Hash Cond: ((public.jsc020.sno)::text = (js020.sno)::text)
+   InitPlan 1 (returns $0)
+     ->  Aggregate  (cost=170.33..170.34 rows=1 width=64)
+           ->  HashAggregate  (cost=145.06..158.85 rows=919 width=54)
+                 Group By Key: public.jsc020.sno
+                 Filter: (count(*) > 2)
+                 ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=14)
+   ->  HashAggregate  (cost=159.64..178.02 rows=919 width=86)
+         Group By Key: public.jsc020.sno
+         Filter: ((count(*) > 2) AND (avg(public.jsc020.grade) = $0))
+         ->  Seq Scan on jsc020  (cost=0.00..101.32 rows=5832 width=14)
+   ->  Hash  (cost=20.00..20.00 rows=1000 width=17)
+         ->  Seq Scan on js020  (cost=0.00..20.00 rows=1000 width=17)
+(14 rows)
+ 

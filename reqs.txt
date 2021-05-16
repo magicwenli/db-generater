@@ -1,0 +1,10 @@
+certifi==2020.12.5
+click==7.1.2
+Faker @ file:///home/conda/feedstock_root/build_artifacts/faker_1618361095222/work
+greenlet @ file:///Users/runner/miniforge3/conda-bld/greenlet_1615999662523/work
+psycopg2 @ file:///Users/runner/miniforge3/conda-bld/psycopg2_1614021067894/work
+python-dateutil==2.8.1
+python-dotenv @ file:///home/conda/feedstock_root/build_artifacts/python-dotenv_1617408971533/work
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1590081179328/work
+SQLAlchemy @ file:///Users/runner/miniforge3/conda-bld/sqlalchemy_1619069174532/work
+text-unidecode==1.3

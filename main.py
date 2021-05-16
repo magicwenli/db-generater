@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from extents import MyFaker, logger
 from models import db, base, JS020, JC020, JSC020
 
-DEBUG_MODE = 0
+PASS_MODE = 0
 DROP_ALL = 1
 STUDENT_NUM = 1000
 
@@ -18,7 +18,7 @@ def insertFake(my_fake, json_path):
         logger.info('student to be inserted: {}'.format(s_info))
 
         counter[0] += 1
-        if DEBUG_MODE == 1:
+        if PASS_MODE == 1:
             pass
         else:
             # 插入虚假学生信息
@@ -33,7 +33,7 @@ def insertFake(my_fake, json_path):
         logger.info('course to be inserted: {}'.format(c_info))
 
         counter[1] += 1
-        if DEBUG_MODE == 1:
+        if PASS_MODE == 1:
             pass
         else:
             # 插入虚假课程信息
@@ -61,7 +61,7 @@ def insertFake(my_fake, json_path):
             logger.info('sc to be inserted: {}'.format(fake_sc))
 
             counter[2] += 1
-            if DEBUG_MODE == 1:
+            if PASS_MODE == 1:
                 pass
             else:
                 # 插入虚假选课信息

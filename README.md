@@ -42,6 +42,10 @@ DROP_ALL = 1
 STUDENT_NUM = 1000
 ```
 
+## Credits
+
+实验报告使用的$\LaTeX$模板：[Plain Template](https://github.com/magicwenli/plain_template)
+
 ## License
 
 MIT License
